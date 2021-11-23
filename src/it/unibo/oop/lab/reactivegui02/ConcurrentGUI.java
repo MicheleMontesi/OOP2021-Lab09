@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.JButton;
@@ -74,7 +75,7 @@ public class ConcurrentGUI extends JFrame{
     public class Agent implements Runnable {
 
         private volatile boolean stop;
-        private volatile boolean increment;
+        private volatile boolean increment = true;
         private int counter;
 
         @Override
@@ -87,13 +88,14 @@ public class ConcurrentGUI extends JFrame{
                             this.counter--;
                         }
                         final var next = Integer.toString(this.counter);
-                       //swingutilities.invokeandwait
-                        ConcurrentGUI.this.display.setText(next);
-                    //} finally {
-                        //lock.unlock();
+                        SwingUtilities.invokeAndWait(new Runnable() {
+                            @Override
+                            public void run() {
+                                ConcurrentGUI.this.display.setText(next);
+                            }
+                        });
                         Thread.sleep(100);
-                    //}
-                } catch (InterruptedException ex) {
+                } catch (InterruptedException | InvocationTargetException ex) {
                     ex.printStackTrace();
                 }
             }

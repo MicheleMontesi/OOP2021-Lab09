@@ -5,12 +5,14 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 /**
  * This is a first example on how to realize a reactive GUI.
@@ -82,17 +84,17 @@ public final class ConcurrentGUI extends JFrame {
         @Override
         public void run() {
             while (!this.stop) {
-                final ReentrantLock lock = new ReentrantLock();
                 try {
-                    lock.lock();
-                    try {
-                        this.counter++;
-                        ConcurrentGUI.this.display.setText(Integer.toString(this.counter));
-                    } finally {
-                        lock.unlock();
-                        Thread.sleep(100);
-                    }
-                } catch (InterruptedException ex) {
+                    this.counter++;
+                    final var next = Integer.toString(counter);
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            ConcurrentGUI.this.display.setText(next);
+                        }
+                    });
+                    Thread.sleep(100);
+                } catch (InterruptedException | InvocationTargetException ex) {
                     /*
                      * This is just a stack trace print, in a real program there
                      * should be some logging and decent error reporting
